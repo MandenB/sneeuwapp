@@ -913,7 +913,7 @@
   font-size: 10px;
 }
 
-.detail-table-row.day-row {
+.detail-table-row.forecast-day-row {
   border-top-color: #e8dfca;
   background: #fffaf0;
   box-shadow: inset 3px 0 #e7b45d;

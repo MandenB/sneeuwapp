@@ -1211,7 +1211,7 @@ function DetailedForecastTable({
         </div>
         {rows.map((row) => (
           <div
-            className={`detail-table-row ${row.period === 'night' ? 'night-row' : 'day-row'}`}
+            className={`detail-table-row ${row.period === 'night' ? 'night-row' : 'forecast-day-row'}`}
             role="row"
             key={row.key}
           >
