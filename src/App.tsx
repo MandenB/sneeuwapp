@@ -188,6 +188,18 @@ function getDayLabel(day: string, timezone: string, index: number) {
   }).format(new Date(`${day}T12:00:00Z`))
 }
 
+function getModelDayLabel(day: string) {
+  const parts = new Intl.DateTimeFormat('en', {
+    weekday: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  }).formatToParts(new Date(`${day}T12:00:00Z`))
+  return parts
+    .filter((part) => part.type === 'weekday' || part.type === 'day')
+    .map((part) => part.value)
+    .join(' ')
+}
+
 function getSnowSeasonStartYear(date = new Date()) {
   return date.getUTCMonth() >= 9 ? date.getUTCFullYear() : date.getUTCFullYear() - 1
 }
@@ -820,7 +832,7 @@ function ModelSnowfallChart({
               textAnchor="middle"
               className="chart-axis-label chart-day-label"
             >
-              {getDayLabel(point.time.slice(0, 10), activeForecast.timezone, Math.floor(index / 2))}
+              {getModelDayLabel(point.time.slice(0, 10))}
               <tspan x={x(index)} dy="13">{getHourLabel(point.time)}</tspan>
             </text>
           ))}
@@ -1463,23 +1475,33 @@ function App() {
           <span>alpine<span className="brand-light"> / report</span></span>
         </a>
         <span className="topbar-note">Mountain weather across the Alps</span>
-        <div className="unit-switch" aria-label="Temperature units">
-          <button
-            type="button"
-            className={unit === 'celsius' ? 'selected' : ''}
-            aria-pressed={unit === 'celsius'}
-            onClick={() => setUnit('celsius')}
+        <div className="topbar-actions">
+          <a
+            className="feedback-button"
+            href="https://github.com/MandenB/sneeuwapp/issues/new"
+            target="_blank"
+            rel="noreferrer"
           >
-            °C
-          </button>
-          <button
-            type="button"
-            className={unit === 'fahrenheit' ? 'selected' : ''}
-            aria-pressed={unit === 'fahrenheit'}
-            onClick={() => setUnit('fahrenheit')}
-          >
-            °F
-          </button>
+            Leave feedback
+          </a>
+          <div className="unit-switch" aria-label="Temperature units">
+            <button
+              type="button"
+              className={unit === 'celsius' ? 'selected' : ''}
+              aria-pressed={unit === 'celsius'}
+              onClick={() => setUnit('celsius')}
+            >
+              °C
+            </button>
+            <button
+              type="button"
+              className={unit === 'fahrenheit' ? 'selected' : ''}
+              aria-pressed={unit === 'fahrenheit'}
+              onClick={() => setUnit('fahrenheit')}
+            >
+              °F
+            </button>
+          </div>
         </div>
       </header>
 
