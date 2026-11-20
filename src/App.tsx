@@ -126,6 +126,62 @@ const initialResort: Resort = {
   longitude: 7.74863,
   elevation: 1608,
 }
+
+const savedResortStorageKey = 'alpine-report-last-resort'
+
+function isResort(value: unknown): value is Resort {
+  if (typeof value !== 'object' || value === null) return false
+  const resort = value as Partial<Resort>
+  return typeof resort.id === 'string' &&
+    typeof resort.name === 'string' &&
+    typeof resort.country === 'string' &&
+    typeof resort.countryCode === 'string' &&
+    (resort.admin1 === undefined || typeof resort.admin1 === 'string') &&
+    Number.isFinite(resort.latitude) &&
+    Number.isFinite(resort.longitude) &&
+    Number.isFinite(resort.elevation)
+}
+
+function loadSavedResort(): { resort: Resort; error: string } {
+  try {
+    const savedResort = window.localStorage.getItem(savedResortStorageKey)
+    if (!savedResort) return { resort: initialResort, error: '' }
+    const parsedResort: unknown = JSON.parse(savedResort)
+    return isResort(parsedResort)
+      ? { resort: parsedResort, error: '' }
+      : { resort: initialResort, error: 'The saved resort could not be restored. Choose a resort to save it again.' }
+  } catch {
+    return { resort: initialResort, error: 'Your browser could not access the saved resort.' }
+  }
+}
+
+function getSkiInfoWebcamUrl(resort: Resort) {
+  const areaByCountry: Record<string, string> = {
+    AT: 'oostenrijk',
+    CH: 'zwitserland',
+    DE: 'duitsland',
+    FR: resort.latitude >= 45.2 ? 'noordelijke-alpen' : 'zuidelijke-alpen',
+    IT: 'italie',
+    LI: 'liechtenstein',
+    SI: 'slovenia',
+  }
+  const area = areaByCountry[resort.countryCode]
+  if (!area) return null
+
+  const resortSlug = resort.name
+    .replace(/[äÄ]/g, 'ae')
+    .replace(/[öÖ]/g, 'oe')
+    .replace(/[üÜ]/g, 'ue')
+    .replace(/ß/g, 'ss')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+  if (!resortSlug) return null
+  return `https://www.skiinfo.nl/${area}/${resortSlug}/webcam`
+}
+
 const directionLabels = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
 
 function weatherLabel(code: WeatherValue) {
@@ -1260,14 +1316,16 @@ function DetailedForecastTable({
 }
 
 function App() {
-  const [resort, setResort] = useState(initialResort)
+  const [savedResort] = useState(loadSavedResort)
+  const [resort, setResort] = useState(savedResort.resort)
   const [upperElevation, setUpperElevation] = useState(2800)
   const [upperElevationInput, setUpperElevationInput] = useState('2800')
-  const [searchText, setSearchText] = useState(() => formatResortLabel(initialResort))
+  const [searchText, setSearchText] = useState(() => formatResortLabel(savedResort.resort))
   const [locationOptions, setLocationOptions] = useState<Resort[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState('')
+  const [storageError, setStorageError] = useState(savedResort.error)
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [upperWeather, setUpperWeather] = useState<WeatherData | null>(null)
   const [modelForecast, setModelForecast] = useState<ModelForecast | null>(null)
@@ -1281,6 +1339,15 @@ function App() {
   const [upperError, setUpperError] = useState('')
   const [modelError, setModelError] = useState('')
   const minUpperElevation = Math.min(4500, Math.round(resort.elevation + 100))
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(savedResortStorageKey, JSON.stringify(resort))
+      setStorageError('')
+    } catch {
+      setStorageError('Your browser could not save this resort.')
+    }
+  }, [resort])
 
   useEffect(() => {
     const query = searchText.trim()
@@ -1466,6 +1533,7 @@ function App() {
     ? null
     : current.snow_depth * 100
   const temperatureUnit = unit === 'celsius' ? '°C' : '°F'
+  const webcamUrl = getSkiInfoWebcamUrl(resort)
 
   return (
     <main className="app-shell">
@@ -1565,9 +1633,19 @@ function App() {
             </div>
           )}
         </form>
-        <span className="resort-elevation">
-          <span aria-hidden="true">●</span> Location point · {resort.elevation.toLocaleString()} m
-        </span>
+        <div className="resort-details">
+          <span className="resort-elevation">
+            <span aria-hidden="true">●</span> Location point · {resort.elevation.toLocaleString()} m
+          </span>
+          {webcamUrl && (
+            <a className="webcam-link" href={webcamUrl} target="_blank" rel="noreferrer">
+              Skiinfo webcams ↗
+            </a>
+          )}
+          <span className={`storage-note ${storageError ? 'storage-error' : ''}`} role={storageError ? 'alert' : undefined}>
+            {storageError || 'Last resort saved on this device'}
+          </span>
+        </div>
         <label className="upper-elevation-control" htmlFor="upper-elevation">
           <span>UPPER-MOUNTAIN ELEVATION</span>
           <span className="upper-elevation-input">

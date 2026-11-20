@@ -279,6 +279,33 @@
   font-size: 9px;
 }
 
+.resort-details {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 5px;
+}
+
+.webcam-link {
+  width: fit-content;
+  color: #536f5d;
+  font-size: 10px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.webcam-link:hover {
+  text-decoration: underline;
+}
+
+.storage-note {
+  color: #898479;
+  font-size: 9px;
+}
+
+.storage-error {
+  color: #9c3d27;
+}
+
 .upper-elevation-control {
   display: grid;
   gap: 5px;
@@ -1168,6 +1195,21 @@
     width: min(100% - 32px, 540px);
   }
 
+  .resort-bar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .resort-search {
+    width: 100%;
+  }
+
+  .resort-details,
+  .upper-elevation-control {
+    padding-left: 36px;
+  }
+
   .topbar {
     height: 64px;
   }
@@ -1254,12 +1296,7 @@
   }
 
   .resort-elevation {
-    padding-left: 36px;
     font-size: 9px;
-  }
-
-  .upper-elevation-control {
-    padding-left: 36px;
   }
 
   .conditions-overview {
