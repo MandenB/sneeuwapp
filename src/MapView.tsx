@@ -72,6 +72,15 @@ function getGeoJSONSource(map: MapLibreMap, id: string): GeoJSONSource | null {
   return source?.type === 'geojson' ? source as GeoJSONSource : null
 }
 
+function getFeatureName(tags: Record<string, string>): string {
+  return tags.name
+    ?? tags['name:en']
+    ?? tags['piste:ref']
+    ?? tags.ref
+    ?? tags['local_ref']
+    ?? ''
+}
+
 function parseSkiFeatures(value: unknown): SkiFeatureCollection {
   if (!isRecord(value) || !Array.isArray(value.elements)) {
     throw new Error('The OpenStreetMap response was not in the expected format.')
@@ -108,7 +117,7 @@ function parseSkiFeatures(value: unknown): SkiFeatureCollection {
       properties: {
         kind,
         difficulty,
-        name: tags.name ?? '',
+        name: getFeatureName(tags),
         liftType: tags.aerialway ?? '',
       },
       geometry: {
@@ -355,6 +364,52 @@ function MapView({ active, latitude, longitude, resortName }: MapViewProps) {
           'line-width': 2.8,
         },
       }, firstSymbolLayerId)
+      map.addLayer({
+        id: 'ski-piste-names',
+        type: 'symbol',
+        source: 'ski-overlays',
+        minzoom: 11.5,
+        filter: ['all',
+          ['==', ['get', 'kind'], 'piste'],
+          ['!=', ['get', 'name'], ''],
+        ],
+        layout: {
+          visibility: 'none',
+          'symbol-placement': 'line',
+          'text-field': ['get', 'name'],
+          'text-size': 11,
+          'text-letter-spacing': 0.05,
+          'text-max-angle': 30,
+        },
+        paint: {
+          'text-color': '#26352b',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 1.5,
+        },
+      }, firstSymbolLayerId)
+      map.addLayer({
+        id: 'ski-lift-names',
+        type: 'symbol',
+        source: 'ski-overlays',
+        minzoom: 11.5,
+        filter: ['all',
+          ['==', ['get', 'kind'], 'lift'],
+          ['!=', ['get', 'name'], ''],
+        ],
+        layout: {
+          visibility: 'none',
+          'symbol-placement': 'line',
+          'text-field': ['get', 'name'],
+          'text-size': 11,
+          'text-letter-spacing': 0.03,
+          'text-max-angle': 30,
+        },
+        paint: {
+          'text-color': '#813b9b',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 1.5,
+        },
+      }, firstSymbolLayerId)
     })
     map.addControl(
       new NavigationControl({ showZoom: true, showCompass: true, visualizePitch: true }),
@@ -382,7 +437,7 @@ function MapView({ active, latitude, longitude, resortName }: MapViewProps) {
     const map = mapRef.current
     if (!map || !mapLoaded) return
 
-    const layerIds = ['ski-pistes', 'ski-lifts']
+    const layerIds = ['ski-pistes', 'ski-lifts', 'ski-piste-names', 'ski-lift-names']
     layerIds.forEach((layerId) => {
       if (map.getLayer(layerId)) {
         map.setLayoutProperty(layerId, 'visibility', pistesVisible ? 'visible' : 'none')
