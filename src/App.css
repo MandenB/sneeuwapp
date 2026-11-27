@@ -121,6 +121,242 @@
   font-size: 12px;
 }
 
+.main-tabs {
+  display: flex;
+  width: fit-content;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f3f1eb;
+}
+
+.main-tabs button {
+  min-width: 108px;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.main-tabs button.selected {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgb(38 53 42 / 10%);
+}
+
+.main-tab-panel[hidden] {
+  display: none;
+}
+
+.map-view {
+  position: relative;
+  height: min(72vh, 720px);
+  min-height: 420px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #d7e0d8;
+}
+
+.map-view > .map-canvas.maplibregl-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.map-view .maplibregl-ctrl-top-right {
+  top: 8px;
+  right: 8px;
+}
+
+.map-view .maplibregl-ctrl-attrib {
+  font-size: 9px;
+}
+
+.map-location-chip,
+.map-hint,
+.map-status,
+.map-error {
+  position: absolute;
+  z-index: 1;
+  border: 1px solid rgb(233 229 221 / 90%);
+  border-radius: 7px;
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 2px 8px rgb(38 53 42 / 10%);
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.map-location-chip {
+  top: 14px;
+  left: 14px;
+  padding: 8px 11px;
+  font-weight: 650;
+}
+
+.map-overlay-controls {
+  position: absolute;
+  z-index: 2;
+  top: 58px;
+  left: 14px;
+  display: grid;
+  width: 194px;
+  max-height: calc(100% - 112px);
+  gap: 7px;
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid rgb(233 229 221 / 90%);
+  border-radius: 8px;
+  background: rgb(250 251 248 / 96%);
+  box-shadow: 0 2px 8px rgb(38 53 42 / 12%);
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.map-overlay-controls > label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.map-overlay-controls input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: #486b55;
+}
+
+.map-overlay-status,
+.map-overlay-warning {
+  margin: 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.map-overlay-legend {
+  display: grid;
+  gap: 4px;
+  padding: 6px 0 2px 22px;
+  border-top: 1px solid #e3e7e1;
+  color: #4d594f;
+  font-size: 9px;
+}
+
+.map-overlay-legend span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.legend-line {
+  display: block;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 0;
+  border-top: 3px solid currentColor;
+}
+
+.piste-novice {
+  color: #27864b;
+}
+
+.piste-easy {
+  color: #287cc2;
+}
+
+.piste-intermediate {
+  color: #d94b43;
+}
+
+.piste-expert {
+  color: #343a35;
+}
+
+.lift-line {
+  border-top-style: dashed;
+  color: #813b9b;
+}
+
+.legend-swatch {
+  display: block;
+  flex: 0 0 10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.slope-gentle {
+  background: #6daf87;
+}
+
+.slope-moderate {
+  background: #f0ce5a;
+}
+
+.slope-steep {
+  background: #e88b3b;
+}
+
+.slope-very-steep {
+  background: #cc5148;
+}
+
+.map-overlay-warning {
+  padding-top: 6px;
+  border-top: 1px solid #e3e7e1;
+  color: #7e4c33;
+}
+
+.map-hint {
+  bottom: 12px;
+  left: 12px;
+  max-width: calc(100% - 190px);
+  margin: 0;
+  padding: 7px 9px;
+  color: #5e675f;
+  font-size: 9px;
+}
+
+.map-status,
+.map-error {
+  top: 50%;
+  left: 50%;
+  max-width: calc(100% - 32px);
+  padding: 10px 14px;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.map-error {
+  border-color: #e5c4ba;
+  color: #8b3f32;
+}
+
+.map-loading {
+  position: relative;
+  display: grid;
+  min-height: 420px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #d7e0d8;
+  color: var(--muted);
+}
+
+.map-view .maplibregl-ctrl-attrib a {
+  color: #53675a;
+}
+
 .resort-bar {
   position: relative;
   display: flex;
@@ -1222,6 +1458,15 @@
     padding: 32px 0 19px;
   }
 
+  .map-view {
+    height: min(68vh, 620px);
+    min-height: 380px;
+  }
+
+  .map-loading {
+    min-height: 380px;
+  }
+
   .conditions-overview {
     grid-template-columns: 1fr auto 150px;
     min-height: 164px;
@@ -1297,6 +1542,27 @@
 
   .resort-elevation {
     font-size: 9px;
+  }
+
+  .map-view {
+    min-height: 340px;
+  }
+
+  .map-loading {
+    min-height: 340px;
+  }
+
+  .map-hint {
+    bottom: 8px;
+    left: 8px;
+    max-width: calc(100% - 190px);
+    text-align: center;
+  }
+
+  .map-overlay-controls {
+    top: 54px;
+    left: 8px;
+    width: 184px;
   }
 
   .conditions-overview {

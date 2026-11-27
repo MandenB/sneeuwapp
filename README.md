@@ -2,6 +2,7 @@
 
 A ski-weather overview for the European Alps. Type a resort, village, or nearby town and choose a matching Alpine location to see:
 
+- A dedicated Forecast tab and a Map tab with rotatable, zoomable 3D terrain centered on the selected location
 - Current conditions and temperature
 - Estimated new snowfall over the next 24 hours
 - Modelled snow depth, cloud cover, wind direction, speed, and gusts
@@ -13,6 +14,8 @@ A ski-weather overview for the European Alps. Type a resort, village, or nearby 
 - A comparison of available weather models and their mean
 
 Location search uses Open-Meteo geocoding and filters results to the Alpine region. The last selected location is saved in the browser and restored on the next visit; it is not synced between devices or accounts. Where a Skiinfo webcam URL can be constructed for the selected location, a link opens its webcam page in a new tab. The location forecast uses the selected point and its geocoded elevation. The upper-mountain forecast uses the same coordinates at a separately adjustable elevation, initially set 1,200 m higher (up to 4,500 m). Neither point represents every elevation or terrain feature in a resort.
+
+The 3D map uses Mapterhorn elevation tiles and OpenFreeMap vector tiles styled with a winter palette, with source attribution shown on the map. Terrain resolution varies by region. Optional ski-run and lift overlays query OpenStreetMap through the global [VK Maps Overpass API](https://maps.mail.ru/osm/tools/overpass/); coverage depends on OSM mapping and service availability. The optional slope-angle overlay is derived from the visible terrain samples and is an approximate terrain characteristic, not an avalanche forecast or safety assessment.
 
 Weather data is provided by [Open-Meteo](https://open-meteo.com/) with no API key. The app requests a catalogue of known global and Alpine regional model feeds, then displays models that return data for the selected location and chart variable. The graph extends through the longest available forecast for the selected variable (up to 16 days) and does not fill unavailable model data. Click or focus the graph and use the arrow keys to inspect each model at a forecast time. Model availability and forecast duration vary by location and variable; shorter coverage is marked. The catalogue may not include every model Open-Meteo adds. A mean uses available model data and is a guide, not a separate forecast or certainty.
 

@@ -1,5 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { lazy, Suspense, useEffect, useState, type FormEvent } from 'react'
 import './App.css'
+
+const MapView = lazy(() => import('./MapView.tsx'))
 
 type Resort = {
   id: string
@@ -86,6 +88,7 @@ type Unit = 'celsius' | 'fahrenheit'
 type ComparisonMetric = ModelVariable
 type SnowfallView = 'total' | '12-hour'
 type GraphTab = 'forecast' | 'history'
+type MainTab = 'forecast' | 'map'
 
 const forecastModels: { id: string; label: string; color: string }[] = [
   { id: 'ecmwf_ifs025', label: 'ECMWF IFS', color: '#54816b' },
@@ -1317,6 +1320,8 @@ function DetailedForecastTable({
 
 function App() {
   const [savedResort] = useState(loadSavedResort)
+  const [activeTab, setActiveTab] = useState<MainTab>('forecast')
+  const [mapOpened, setMapOpened] = useState(false)
   const [resort, setResort] = useState(savedResort.resort)
   const [upperElevation, setUpperElevation] = useState(2800)
   const [upperElevationInput, setUpperElevationInput] = useState('2800')
@@ -1505,6 +1510,11 @@ function App() {
     }
   }
 
+  function selectMainTab(tab: MainTab) {
+    setActiveTab(tab)
+    if (tab === 'map') setMapOpened(true)
+  }
+
   const current = weather?.current
   const hourlyStart = current && weather
     ? weather.hourly.time.findIndex((time) => time >= current.time)
@@ -1578,6 +1588,52 @@ function App() {
         <h1>Mountain conditions</h1>
         <p>Snow, wind and weather at your favourite ski areas.</p>
       </section>
+
+      <div
+        className="main-tabs"
+        role="tablist"
+        aria-label="Main views"
+        onKeyDown={(event) => {
+          const nextTab = event.key === 'Home'
+            ? 'forecast'
+            : event.key === 'End'
+              ? 'map'
+              : event.key === 'ArrowRight'
+                ? activeTab === 'forecast' ? 'map' : 'forecast'
+                : event.key === 'ArrowLeft'
+                  ? activeTab === 'map' ? 'forecast' : 'map'
+                  : null
+          if (!nextTab) return
+          event.preventDefault()
+          selectMainTab(nextTab)
+          document.getElementById(`main-tab-${nextTab}`)?.focus()
+        }}
+      >
+        <button
+          type="button"
+          id="main-tab-forecast"
+          role="tab"
+          aria-selected={activeTab === 'forecast'}
+          aria-controls="main-panel-forecast"
+          tabIndex={activeTab === 'forecast' ? 0 : -1}
+          className={activeTab === 'forecast' ? 'selected' : ''}
+          onClick={() => selectMainTab('forecast')}
+        >
+          Forecast
+        </button>
+        <button
+          type="button"
+          id="main-tab-map"
+          role="tab"
+          aria-selected={activeTab === 'map'}
+          aria-controls="main-panel-map"
+          tabIndex={activeTab === 'map' ? 0 : -1}
+          className={activeTab === 'map' ? 'selected' : ''}
+          onClick={() => selectMainTab('map')}
+        >
+          Map
+        </button>
+      </div>
 
       <section className="resort-bar" aria-label="Ski resort search">
         <form className="resort-search" onSubmit={handleLocationSubmit}>
@@ -1670,122 +1726,152 @@ function App() {
         </label>
       </section>
 
-      {error && <p className="error-message" role="alert">{error}</p>}
       {searchError && <p className="error-message" role="alert">{searchError}</p>}
 
-      {current && weather && (
-        <div className="weather-content" aria-live="polite">
-          <section className="conditions-card">
-            <div className="conditions-overview">
-              <div>
-                <p className="card-kicker">{resort.name.toUpperCase()} · LOCATION · {resort.elevation.toLocaleString()} M</p>
-                <p className="current-description">{weatherLabel(current.weather_code)}</p>
-                <p className="current-temp">
-                  {current.temperature_2m === null
-                    ? '—'
-                    : (
-                      <>
-                        {temperature(current.temperature_2m, unit)}
-                        <span>{unit === 'celsius' ? '°C' : '°F'}</span>
-                      </>
-                    )}
-                </p>
-                <p className="feels-like">
-                  Feels like {current.apparent_temperature === null
-                    ? '—'
-                    : `${temperature(current.apparent_temperature, unit)}${unit === 'celsius' ? '°C' : '°F'}`}
-                  <span className="weather-updated">                   · Updated {getHourLabel(current.time)}</span>
-                </p>
-              </div>
-              <div className="current-weather-icon" aria-hidden="true">
-                {weatherIcon(current.weather_code)}
-              </div>
-              <div className="fresh-snow">
-                <span className="snowflake" aria-hidden="true">❄</span>
-                <span className="fresh-snow-label">NEW SNOW · 24 H</span>
-                <strong>{formatValue(next24HoursSnowfall, ' cm', 1)}</strong>
-              </div>
-            </div>
+      <div
+        id="main-panel-forecast"
+        className="main-tab-panel"
+        role="tabpanel"
+        aria-labelledby="main-tab-forecast"
+        tabIndex={0}
+        hidden={activeTab !== 'forecast'}
+      >
+        {error && <p className="error-message" role="alert">{error}</p>}
 
-            <div className="conditions-grid">
-              <article className="condition-stat">
-                <span className="stat-icon snow-icon" aria-hidden="true">❄</span>
-                <span className="stat-label">Snow on ground</span>
-                <strong>{formatValue(snowDepthCm, ' cm')}</strong>
-              </article>
-              <article className="condition-stat">
-                <span className="stat-icon cloud-icon" aria-hidden="true">☁</span>
-                <span className="stat-label">Cloud cover</span>
-                <strong>{formatValue(current.cloud_cover, '%')}</strong>
-              </article>
-              <article className="condition-stat">
-                <span className="stat-icon wind-icon" aria-hidden="true">↗</span>
-                <span className="stat-label">Wind · {direction(current.wind_direction_10m)}</span>
-                <strong>{formatValue(current.wind_speed_10m, ' km/h')}</strong>
-              </article>
-              <article className="condition-stat">
-                <span className="stat-icon gust-icon" aria-hidden="true">≋</span>
-                <span className="stat-label">Wind gusts</span>
-                <strong>{formatValue(current.wind_gusts_10m, ' km/h')}</strong>
-              </article>
-            </div>
-          </section>
+        {current && weather && (
+          <div className="weather-content" aria-live="polite">
+            <section className="conditions-card">
+              <div className="conditions-overview">
+                <div>
+                  <p className="card-kicker">{resort.name.toUpperCase()} · LOCATION · {resort.elevation.toLocaleString()} M</p>
+                  <p className="current-description">{weatherLabel(current.weather_code)}</p>
+                  <p className="current-temp">
+                    {current.temperature_2m === null
+                      ? '—'
+                      : (
+                        <>
+                          {temperature(current.temperature_2m, unit)}
+                          <span>{unit === 'celsius' ? '°C' : '°F'}</span>
+                        </>
+                      )}
+                  </p>
+                  <p className="feels-like">
+                    Feels like {current.apparent_temperature === null
+                      ? '—'
+                      : `${temperature(current.apparent_temperature, unit)}${unit === 'celsius' ? '°C' : '°F'}`}
+                    <span className="weather-updated">                   · Updated {getHourLabel(current.time)}</span>
+                  </p>
+                </div>
+                <div className="current-weather-icon" aria-hidden="true">
+                  {weatherIcon(current.weather_code)}
+                </div>
+                <div className="fresh-snow">
+                  <span className="snowflake" aria-hidden="true">❄</span>
+                  <span className="fresh-snow-label">NEW SNOW · 24 H</span>
+                  <strong>{formatValue(next24HoursSnowfall, ' cm', 1)}</strong>
+                </div>
+              </div>
 
-          <UpperMountainConditions
-            weather={upperWeather}
-            elevation={upperElevation}
-            currentTime={current.time}
-            unit={unit}
-            loading={upperLoading}
-            error={upperError}
-          />
+              <div className="conditions-grid">
+                <article className="condition-stat">
+                  <span className="stat-icon snow-icon" aria-hidden="true">❄</span>
+                  <span className="stat-label">Snow on ground</span>
+                  <strong>{formatValue(snowDepthCm, ' cm')}</strong>
+                </article>
+                <article className="condition-stat">
+                  <span className="stat-icon cloud-icon" aria-hidden="true">☁</span>
+                  <span className="stat-label">Cloud cover</span>
+                  <strong>{formatValue(current.cloud_cover, '%')}</strong>
+                </article>
+                <article className="condition-stat">
+                  <span className="stat-icon wind-icon" aria-hidden="true">↗</span>
+                  <span className="stat-label">Wind · {direction(current.wind_direction_10m)}</span>
+                  <strong>{formatValue(current.wind_speed_10m, ' km/h')}</strong>
+                </article>
+                <article className="condition-stat">
+                  <span className="stat-icon gust-icon" aria-hidden="true">≋</span>
+                  <span className="stat-label">Wind gusts</span>
+                  <strong>{formatValue(current.wind_gusts_10m, ' km/h')}</strong>
+                </article>
+              </div>
+            </section>
 
-          {modelForecast
-            ? <ModelSnowfallChart
-              forecast={modelForecast}
-              mountainForecast={mountainModelForecast}
-              mountainForecastLoading={mountainModelLoading}
-              mountainForecastError={mountainModelError}
+            <UpperMountainConditions
+              weather={upperWeather}
+              elevation={upperElevation}
               currentTime={current.time}
               unit={unit}
-              resort={resort}
-              upperElevation={upperElevation}
+              loading={upperLoading}
+              error={upperError}
             />
-            : modelError
-              ? <p className="error-message" role="alert">{modelError}</p>
-              : <div className="model-loading" role="status">Loading snowfall model comparison…</div>}
 
-          <section className="forecast-section">
-            <div className="section-heading">
-              <div>
-                <p className="card-kicker">HOURLY</p>
-                <h2>At selected location</h2>
+            {modelForecast
+              ? <ModelSnowfallChart
+                forecast={modelForecast}
+                mountainForecast={mountainModelForecast}
+                mountainForecastLoading={mountainModelLoading}
+                mountainForecastError={mountainModelError}
+                currentTime={current.time}
+                unit={unit}
+                resort={resort}
+                upperElevation={upperElevation}
+              />
+              : modelError
+                ? <p className="error-message" role="alert">{modelError}</p>
+                : <div className="model-loading" role="status">Loading snowfall model comparison…</div>}
+
+            <section className="forecast-section">
+              <div className="section-heading">
+                <div>
+                  <p className="card-kicker">HOURLY</p>
+                  <h2>At selected location</h2>
+                </div>
+                <span className="forecast-caption">Next 8 hours · local time</span>
               </div>
-              <span className="forecast-caption">Next 8 hours · local time</span>
-            </div>
-            <div className="hourly-list">
-              {hourlyForecast.map((hour, index) => (
-                <article className={`hour-card ${index === 0 ? 'hour-now' : ''}`} key={hour.time}>
-                  <p>{index === 0 ? 'Now' : getHourLabel(hour.time)}</p>
-                  <span className="hour-icon" aria-hidden="true">{weatherIcon(hour.code)}</span>
-                  <strong>{hour.temperature === null ? '—' : `${temperature(hour.temperature, unit)}${temperatureUnit}`}</strong>
-                  <span className="hour-snow" title="Snowfall">❄ {formatValue(hour.snowfall, '', 1)}</span>
-                  <span className="hour-wind" title="Wind speed">↗ {formatValue(hour.wind, '')}</span>
-                </article>
-              ))}
-            </div>
-          </section>
+              <div className="hourly-list">
+                {hourlyForecast.map((hour, index) => (
+                  <article className={`hour-card ${index === 0 ? 'hour-now' : ''}`} key={hour.time}>
+                    <p>{index === 0 ? 'Now' : getHourLabel(hour.time)}</p>
+                    <span className="hour-icon" aria-hidden="true">{weatherIcon(hour.code)}</span>
+                    <strong>{hour.temperature === null ? '—' : `${temperature(hour.temperature, unit)}${temperatureUnit}`}</strong>
+                    <span className="hour-snow" title="Snowfall">❄ {formatValue(hour.snowfall, '', 1)}</span>
+                    <span className="hour-wind" title="Wind speed">↗ {formatValue(hour.wind, '')}</span>
+                  </article>
+                ))}
+              </div>
+            </section>
 
-          <DetailedForecastTable weather={weather} unit={unit} />
-        </div>
-      )}
+            <DetailedForecastTable weather={weather} unit={unit} />
+          </div>
+        )}
 
-      {loading && (
-        <div className="loading-card" role="status">
-          <span className="loading-icon" aria-hidden="true">❄</span>
-          Loading mountain conditions…
-        </div>
-      )}
+        {loading && (
+          <div className="loading-card" role="status">
+            <span className="loading-icon" aria-hidden="true">❄</span>
+            Loading mountain conditions…
+          </div>
+        )}
+      </div>
+
+      <section
+        id="main-panel-map"
+        className="main-tab-panel map-panel"
+        role="tabpanel"
+        aria-labelledby="main-tab-map"
+        tabIndex={0}
+        hidden={activeTab !== 'map'}
+      >
+        {mapOpened && (
+          <Suspense fallback={<div className="map-loading" role="status">Loading 3D terrain…</div>}>
+            <MapView
+              active={activeTab === 'map'}
+              latitude={resort.latitude}
+              longitude={resort.longitude}
+              resortName={resort.name}
+            />
+          </Suspense>
+        )}
+      </section>
 
       <footer className="footer">
         <span>Forecasts are point estimates at the selected-location and upper-mountain elevations, not measurements across the full resort.</span>
